@@ -1,0 +1,6 @@
+[package]
+name = "raspPins"
+version = "0.1.0"
+authors = ["Jacob Montpetit <vikingfacer@users.noreply.github.com>"]
+
+[dependencies]
