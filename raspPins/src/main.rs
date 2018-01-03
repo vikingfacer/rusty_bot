@@ -1,21 +1,19 @@
-extern crate cupi;
+extern crate rust_pigpio;
 
-use cupi::{CuPi, delay_ms, DigitalWrite};
+use std::thread::sleep;
+use rust_pigpio::*;
+const PIN: u32 = 21;
 
+//Turns light on and off
 fn main() {
-    let cupi = CuPi::new().unwrap();
-    let mut pinout = cupi.pin(0).unwrap().high().output();
-    //let mut pin = cupi.pin_sys(0).unwrap();
-    //pin.export().unwrap();
-    //let mut pinout = pin.output().unwrap();
-
-    for _ in 0..20 {
-        pinout.high().unwrap();
-        delay_ms(600);
-        pinout.low().unwrap();
-        delay_ms(600);
-    }
+  println!("Initialized pigpio. Version: {}", initialize().unwrap());
+  set_mode(PIN, OUTPUT).unwrap();
+  write(PIN, ON).unwrap();
+  sleep(std::time::Duration::from_secs(1));
+  write(PIN, OFF).unwrap();
+  sleep(std::time::Duration::from_secs(1));
+  write(PIN, ON).unwrap();
+  sleep(std::time::Duration::from_secs(1));
+  write(PIN, OFF).unwrap();
+  terminate();
 }
-
-
-
