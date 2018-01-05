@@ -1,0 +1,14 @@
+[[package]]
+name = "raspPins"
+version = "0.1.0"
+dependencies = [
+ "rust-pigpio 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "rust-pigpio"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[metadata]
+"checksum rust-pigpio 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "5e42cf7e4445497bbdcf7e8a6cdef2b51c51f95c2c8744c934d029a1719c77f8"
