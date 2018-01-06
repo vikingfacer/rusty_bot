@@ -22,7 +22,7 @@ const int ledPin1 =  13;      // the number of the LED pin
 const int ledPin2 = 7;
 const int ledPin3 = 6;
 
-const int servoPin1 = 9;
+const int servoPin1 = 46;     //using mega thats why
 const int servoPin2 = 8;
 
 volatile byte ButtonState1 = LOW;

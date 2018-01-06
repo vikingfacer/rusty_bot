@@ -3,7 +3,7 @@ extern crate rust_pigpio;
 use std::thread::sleep;
 use rust_pigpio::*;
 const PIN1: u32 = 21;
-const PIN2: u32 = 13;
+const PIN2: u32 = 18;
 //Turns light on and off
 fn main() {
   println!("Initialized pigpio. Version: {}", initialize().unwrap());
