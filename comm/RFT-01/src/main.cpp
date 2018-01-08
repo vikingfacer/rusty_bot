@@ -16,10 +16,10 @@ void loop() {
     uint8_t addr = 0x04;
     uint16_t payload = 0x5476;
 
-    CPMessage* msg = new CPMessage(addr, payload);
+    CPMessage msg = CPMessage(addr, payload);
 
     Serial.println("Sending...");
-    rcSwitch.send(msg->compile(), 32);
+    rcSwitch.send(msg.compile(), 32);
     Serial.println("Sent!");
     delay(1000);
 }
