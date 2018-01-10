@@ -12,7 +12,7 @@
 #define ADDRESS 0x04
  
 // The I2C bus: This is for V2 pi's. For V1 Model B you need i2c-0
-static const char *devName = "/dev/i2c-1";
+static const char *devName = "/dev/i2c-0";
  
 int main(int argc, char** argv) {
  

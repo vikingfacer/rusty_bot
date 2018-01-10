@@ -1,28 +1,24 @@
 extern crate rust_pigpio;
+extern crate libc;
 
-use std::thread::sleep;
 use rust_pigpio::*;
-const PIN1: u32 = 21;
-const PIN2: u32 = 18;
+
+use std::fs::File;
+use std::io::prelude::*;
+
+
+
+const ADDRESS : u32 = 0x04;
+const I2_C_DEVICE : & str = "dev/i2c-0"; 
+
 //Turns light on and off
 fn main() {
+
+  let f = File::open(I2_C_DEVICE);
+
   println!("Initialized pigpio. Version: {}", initialize().unwrap());
 
-  blink(PIN1);
-  blink(PIN2);
+
 
   terminate();
-}
-
-fn blink(PIN : u32) {
-	  println!("Initialized pigpio. Version: {}", initialize().unwrap());
-
-  set_mode(PIN, OUTPUT).unwrap();
-  write(PIN, ON).unwrap();
-  sleep(std::time::Duration::from_secs(1));
-  write(PIN, OFF).unwrap();
-  sleep(std::time::Duration::from_secs(1));
-  write(PIN, ON).unwrap();
-  sleep(std::time::Duration::from_secs(1));
-  write(PIN, OFF).unwrap();
 }
