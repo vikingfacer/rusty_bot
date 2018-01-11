@@ -1,24 +1,22 @@
-extern crate rust_pigpio;
-extern crate libc;
+extern crate i2cdev;
 
-use rust_pigpio::*;
+use std::thread;
+use std::time::Duration;
 
-use std::fs::File;
-use std::io::prelude::*;
+use i2cdev::core::*;
+use i2cdev::linux::{LinuxI2CDevice, LinuxI2CError};
 
+const SLAVE_ADDR: u16 = 0x04;
 
-
-const ADDRESS : u32 = 0x04;
-const I2_C_DEVICE : & str = "dev/i2c-0"; 
-
-//Turns light on and off
+// real code should probably not use unwrap()
 fn main() {
+    let mut dev = LinuxI2CDevice::new("/dev/i2c-1", SLAVE_ADDR).unwrap();
+    let mut r_buf :[u8; 6] = [0; 6];
+    // init sequence
+    dev.smbus_write_byte_data(0x04, 1).unwrap();
+    dev.smbus_write_byte_data(0x04, 2).unwrap();
+    thread::sleep(Duration::from_millis(10));
 
-  let f = File::open(I2_C_DEVICE);
-
-  println!("Initialized pigpio. Version: {}", initialize().unwrap());
-
-
-
-  terminate();
+    dev.read(&mut r_buf).unwrap();
+    println!("{:?}",r_buf );
 }
