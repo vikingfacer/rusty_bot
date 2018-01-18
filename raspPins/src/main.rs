@@ -28,7 +28,10 @@ use std::io;
 use std::mem;
 
 fn parse_message(raw_mess : String) -> Vec<u8>{
+	// mess
 	let mut message : Vec<u8>= Vec::new();
+	
+	message.push(0x7E);
 
 	for word in raw_mess.split_whitespace(){
 
