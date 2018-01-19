@@ -1,6 +1,6 @@
 #include <SPI.h>
 #include <Servo.h>
-
+#include "Pin_Map.h"
 
 Servo Servo1;
 const int Servo1Pin = 12;
@@ -13,10 +13,12 @@ volatile byte pos;
 volatile boolean process_it;
 
 typedef struct message{
+  char Type;
   int Pin;
   int Action;
 } Message;
 
+PinMap pm = init_mega_PinMap();
 
 void setup() {
   // put your setup code here, to run once:
@@ -58,31 +60,44 @@ ISR (SPI_STC_vect){
 // main loop - wait for flag set in interrupt routine
 void loop (void)
 { 
-  Message cur_msg;
-  if (process_it)
-  {
-    buf [pos] = 0;  
-    digitalWrite(13, HIGH);
-    digitalWrite(13, LOW);
-    cur_msg = process_message(buf);
-//    digitalWrite(cur_msg.Pin, cur_msg.Action);
-    pos = 0;
-    process_it = false;
-    digitalWrite(13, HIGH);
-  }  // end of flag set
-    if(cur_msg.Pin == Servo1Pin && (cur_msg.Action <= 180) && (cur_msg.Action >= 0)){
-      Servo1.write(cur_msg.Action); 
-    }
+    int iop;
+    Message cur_msg;
+    if (process_it)
+    {
+      buf [pos] = 0;  
+      digitalWrite(13, HIGH);
+      digitalWrite(13, LOW);
+      cur_msg = create_message(buf);
+      // digitalWrite(cur_msg.Pin, cur_msg.Action);
+      pos = 0;
+      process_it = false;
+      digitalWrite(13, HIGH);
+    }  // end of flag set
+    switch (cur_msg.Type){
+      case 's':
+      case 'S':
+//        Serial.println(index_of_pin(pm, 'S', cur_msg.Pin), DEC);
+        if( Degree_in_Range(cur_msg.Action)){
+                
+          if(cur_msg.Pin == Servo1Pin) Servo1.write(cur_msg.Action); 
+          if(cur_msg.Pin == Servo2Pin) Servo2.write(cur_msg.Action); 
+        }
+      break;
+      case 'd':
+      case 'D':
+          digitalWrite(cur_msg.Pin, cur_msg.Action);        
+      break;
 
-    if(cur_msg.Pin == Servo2Pin && cur_msg.Action <= 180 && cur_msg.Action >= 0){
-      Servo2.write(cur_msg.Action); 
-    }
-    
+      default:
+//        Serial.println("Message is not good");
+        break;
+      }
+      reset_msg(cur_msg);
 }  // end of loop
 
-Message process_message(int* mes)
+Message create_message(int* mes)
 {
-  // Message is created from ~ (0x7E), <Pin>, <Action>
+  // Message is created from ~ (0x7E),<Type>, <Pin>, <Action>
   Message msg;
   for(int i = 0; i <= pos; i++)
   {
@@ -91,17 +106,28 @@ Message process_message(int* mes)
     if(mes[i] == 0x7E)
     {
       if(i + 1 <= pos)
-        msg.Pin = mes[i + 1];
-
-      if(i + 2 <=pos)
-        msg.Action = mes[i + 2];
+        msg.Type = mes[i + 1];
+        
+      if(i + 2 <= pos)
+        msg.Pin = mes[i + 2];
+        
+      if(i + 3 <=pos)
+        msg.Action = mes[i + 3];
     }
-    
   }
   Serial.print('\n');
   return msg;
 }
+void reset_msg(Message &msg){
+  Message temp;
+  msg.Pin = 0;
+  msg.Action = 0;
+  msg.Type = 0;
+}
 
+boolean Degree_in_Range(int degree){
+  return degree <= 180 && degree >= 0;
+}
 
 
 

@@ -32,7 +32,7 @@ fn parse_message(raw_mess : String) -> Vec<u8>{
 	let mut message : Vec<u8>= Vec::new();
 	
 	message.push(0x7E);
-
+	message.push(raw_mess.as_bytes()[0]);
 	for word in raw_mess.split_whitespace(){
 
 		match word.trim().parse(){
@@ -44,15 +44,20 @@ fn parse_message(raw_mess : String) -> Vec<u8>{
 	message
 }
 
-fn main() {
-    let mut spidev = Spidev::open("/dev/spidev0.0").unwrap();
+fn create_spi() -> io::Result<Spidev>{
+	let mut spidev = Spidev::open("/dev/spidev0.0").unwrap();
     let options = SpidevOptions::new()
                       .bits_per_word(8)
                       .max_speed_hz(5000)
                       .lsb_first(false)
                       .mode(SPI_MODE_0)
                       .build();
-    spidev.configure(&options).unwrap();
+    try!(spidev.configure(&options));
+    Ok(spidev)
+}
+
+fn main() {
+    let mut spidev = create_spi().unwrap();
     loop {
         
 	    println!("===== Single transfer =========");
@@ -65,20 +70,10 @@ fn main() {
 		    }
 		    Err(error) => println!("error: {}", error),
 		}
-		// for word in input.split(' '){
-		// 	println!("split: {:?}", word);
-		// }
-		// let my_num : u8 = match input.trim().parse(){
-		// 	Ok(my_num) => my_num,
-		// 	Err(_) => continue,
-		// };
 
 		let mut dev_buf : Vec<u8>= parse_message(input);
 		println!("{:?}",dev_buf );
-		// dev_buf.push(my_num);
-		// dev_buf.push(0xA);
 
-		// let mut read_buf= vec!(&dev_buf[..]);
 
 	    let mut trans = SpidevTransfer::write(&dev_buf[..]);
 
