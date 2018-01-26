@@ -26,6 +26,7 @@ int index_of_pin(PinMap map, char type, int pin){
 	int size = 0;
 	int* array = 0;
 	int index = -1;
+	pin -= 48; // char off set
 	if(type == 'A' or type == 'a') {
 		size = map.Asize;
 		array = map.A;

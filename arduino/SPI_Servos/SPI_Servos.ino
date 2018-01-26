@@ -1,6 +1,11 @@
 #include <SPI.h>
+#include <Wire.h>
 #include <Servo.h>
-#include "Pin_Map.h"
+//#include "Pin_Map.h"
+
+#define SLAVE_ADDRESS 0x04
+int number = 0;
+int state = 0;
 
 Servo Servo1;
 const int Servo1Pin = 12;
@@ -18,7 +23,6 @@ typedef struct message{
   int Action;
 } Message;
 
-PinMap pm = init_mega_PinMap();
 
 void setup() {
   // put your setup code here, to run once:
@@ -29,17 +33,24 @@ void setup() {
 
   Servo2.attach(Servo2Pin);
   Servo2.write(90);
-  
+  /**** SPI ******/
   pinMode(MISO,OUTPUT);
-
+  SPI.attachInterrupt();pos = 0;
+  
   // turn spi into a slave mode
   SPCR |= _BV(SPE);
 
+
+  /**** I2C ******/
+  // initialize i2c as slave
+  Wire.begin(SLAVE_ADDRESS);
+ 
+  // define callbacks for i2c communication
+  Wire.onReceive(receiveData);
+
   // get ready for an iterrupt
-  pos = 0;
   process_it = false;
 
-  SPI.attachInterrupt();
 }
 
 ISR (SPI_STC_vect){
@@ -73,6 +84,7 @@ void loop (void)
       process_it = false;
       digitalWrite(13, HIGH);
     }  // end of flag set
+//    Serial.println(buf, DEC)
     switch (cur_msg.Type){
       case 's':
       case 'S':
@@ -99,6 +111,7 @@ Message create_message(int* mes)
 {
   // Message is created from ~ (0x7E),<Type>, <Pin>, <Action>
   Message msg;
+  Serial.print("SPI: ");  
   for(int i = 0; i <= pos; i++)
   {
     Serial.print (mes[i], HEX);
@@ -119,12 +132,35 @@ Message create_message(int* mes)
   return msg;
 }
 void reset_msg(Message &msg){
-  Message temp;
   msg.Pin = 0;
   msg.Action = 0;
   msg.Type = 0;
 }
+/****** I2C functions****************/
+// callback for received data
+void receiveData(int byteCount){
+ int number;
+ while(Wire.available()) {
+  number = Wire.read();
+ 
+  if (number == 1){
+   if (state == 0){
+    digitalWrite(13, HIGH); // set the LED on
+    state = 1;
+   } else{
+    digitalWrite(13, LOW); // set the LED off
+    state = 0;
+   }
 
+  }
+ 
+//  if(number==2) {
+//   number = (int)temp;
+//  }
+ }
+  Serial.print("I2C: ");
+  Serial.println(number, HEX);
+}
 boolean Degree_in_Range(int degree){
   return degree <= 180 && degree >= 0;
 }
