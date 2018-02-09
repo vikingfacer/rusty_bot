@@ -3,9 +3,10 @@
 #include <Servo.h>
 //#include "Pin_Map.h"
 
-#define SLAVE_ADDRESS 0x04
-int number = 0;
-int state = 0;
+int const SLAVE_ADDRESS = 0x04;
+int i2cBuf[100] = {0};
+int i2cBufCount = 0; 
+boolean i2c_process_it;
 
 Servo Servo1;
 const int Servo1Pin = 12;
@@ -15,7 +16,7 @@ const int Servo2Pin = 11;
 
 int buf [100];
 volatile byte pos;
-volatile boolean process_it;
+volatile boolean spi_process_it;
 
 typedef struct message{
   char Type;
@@ -47,9 +48,9 @@ void setup() {
  
   // define callbacks for i2c communication
   Wire.onReceive(receiveData);
-
+  i2c_process_it = false;
   // get ready for an iterrupt
-  process_it = false;
+  spi_process_it = false;
 
 }
 
@@ -62,9 +63,8 @@ ISR (SPI_STC_vect){
     buf [pos++] = c;
   
     if(c == '\n') {
-      process_it = true;
+      spi_process_it = true;
     }
-  
   }
 }
 
@@ -73,7 +73,7 @@ void loop (void)
 { 
     int iop;
     Message cur_msg;
-    if (process_it)
+    if (spi_process_it)
     {
       buf [pos] = 0;  
       digitalWrite(13, HIGH);
@@ -81,10 +81,10 @@ void loop (void)
       cur_msg = create_message(buf);
       // digitalWrite(cur_msg.Pin, cur_msg.Action);
       pos = 0;
-      process_it = false;
+      spi_process_it = false;
       digitalWrite(13, HIGH);
     }  // end of flag set
-//    Serial.println(buf, DEC)
+
     switch (cur_msg.Type){
       case 's':
       case 'S':
@@ -102,9 +102,19 @@ void loop (void)
 
       default:
 //        Serial.println("Message is not good");
-        break;
+      break;
+    }
+    reset_msg(cur_msg);
+    if(i2c_process_it){
+      Serial.print("i2c: ");
+      for(int i = 0; i <= i2cBufCount; i++){
+        Serial.print(i2cBuf[i], HEX);
+        Serial.print(", ");
       }
-      reset_msg(cur_msg);
+      Serial.print('\n');
+      i2c_process_it = false;
+      i2cBufCount = 0;
+    }
 }  // end of loop
 
 Message create_message(int* mes)
@@ -139,28 +149,19 @@ void reset_msg(Message &msg){
 /****** I2C functions****************/
 // callback for received data
 void receiveData(int byteCount){
- int number;
- while(Wire.available()) {
-  number = Wire.read();
- 
-  if (number == 1){
-   if (state == 0){
-    digitalWrite(13, HIGH); // set the LED on
-    state = 1;
-   } else{
-    digitalWrite(13, LOW); // set the LED off
-    state = 0;
-   }
-
+  int number;
+  while(Wire.available()) {
+    number = Wire.read(); 
   }
- 
-//  if(number==2) {
-//   number = (int)temp;
-//  }
- }
-  Serial.print("I2C: ");
-  Serial.println(number, HEX);
+  if(pos < sizeof i2cBuf){
+    i2cBuf[i2cBufCount++] = number;
+    if(number == '\n') {
+      i2c_process_it = true;
+    }
+  }
+  
 }
+
 boolean Degree_in_Range(int degree){
   return degree <= 180 && degree >= 0;
 }
