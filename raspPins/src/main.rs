@@ -1,8 +1,12 @@
-extern crate i2cdev;
-
+extern crate magnetic;
+use std::thread::spawn;
 use std::thread;
+use magnetic::spsc::spsc_queue;
+use magnetic::buffer::dynamic::DynamicBuffer;
+use magnetic::{Producer, Consumer};
 use std::time::Duration;
 
+extern crate i2cdev;
 use i2cdev::core::*;
 use i2cdev::linux::{LinuxI2CDevice, LinuxI2CError};
 
@@ -20,7 +24,7 @@ fn parse_message(raw_mess : &String) -> Vec<u8>{
 	let mut message : Vec<u8>= Vec::new();
 	
 	message.push(0x7E);
-	message.push(raw_mess.as_bytes()[0]);
+	message.push(raw_mess.as_bytes()[1]);
 	for word in raw_mess.split_whitespace(){
 
 		match word.trim().parse(){
@@ -44,7 +48,7 @@ fn create_spi() -> io::Result<Spidev>{
     Ok(spidev)
 }
 
-fn send_via_i2c(i2cdev : &LinuxI2CDevice, msg : &Vec<u8>){
+fn send_via_i2c(i2cdev : &mut LinuxI2CDevice, msg : &Vec<u8>){
     for byte in msg.iter() {
 	(*i2cdev).smbus_write_byte_data(0x04, *byte).unwrap();
 	thread::sleep(Duration::from_millis(10));
@@ -53,12 +57,40 @@ fn send_via_i2c(i2cdev : &LinuxI2CDevice, msg : &Vec<u8>){
 
 fn main() {
     let spidev = create_spi().unwrap();
-	let i2c_dev = LinuxI2CDevice::new("/dev/i2c-1", SLAVE_ADDR).unwrap();
+	let mut i2c_dev = LinuxI2CDevice::new("/dev/i2c-1", SLAVE_ADDR).unwrap();
+
+
+	let (spi_p, spi_c) = spsc_queue(DynamicBuffer::new(32).unwrap());
+	let (i2c_p, i2c_c) = spsc_queue(DynamicBuffer::new(32).unwrap());
+
+	// i2c thread 
+	let i2c = spawn(move || {
+	    loop {
+	        let i2c_buf = i2c_c.pop().unwrap();
+	        println!("i2c Consumed {:?}", i2c_buf);
+	        send_via_i2c(&mut i2c_dev, &i2c_buf);
+
+	    }
+	});
+
+	// spi thread
+	let spi = spawn(move || {
+	    loop {
+	        let spi_buf :Vec<u8> = spi_c.pop().unwrap();
+	        println!("spi Consumed {:?}", spi_buf);
+		    let mut trans = SpidevTransfer::write(&spi_buf[..]);
+		    println!("{:?}", spidev.transfer(&mut trans));
+
+	    }
+	});
+	// main thread
     loop {
         
 	    println!("===== Single transfer =========");
 
 		let mut input = String::new();
+
+		// reads in the line from std
 		match io::stdin().read_line(&mut input) {
 		    Ok(n) => {
 		        println!("{} bytes read", n);
@@ -67,35 +99,42 @@ fn main() {
 		    Err(error) => println!("error: {}", error),
 		}
 
-		let dev_buf : Vec<u8>= parse_message(&input);
-		println!("{:?}",dev_buf );
+		let index : usize = input.find(' ').unwrap();
+
+		let (i_or_s, buffer) = input.split_at(index);
+
+		println!(" {:?} {:?}", i_or_s, buffer  );
+
+		let dev_buf : Vec<u8> = parse_message(&String::from(buffer));
+		println!("{:?}", dev_buf );
+
+		//  depending on what the message starts with decides what happens to it
+		if (i_or_s == "i") | (i_or_s == "I") {
+			i2c_p.push( dev_buf);
+
+		}else if (i_or_s == "s") | (i_or_s == "S") {
+			spi_p.push( dev_buf);
+
+		}
+
+	// 	// parses message into arduino readable 
+	// 	let dev_buf : Vec<u8>= parse_message(&input);
+	// 	println!("{:?}",dev_buf );
 
 
-	    let mut trans = SpidevTransfer::write(&dev_buf[..]);
-	  //   for byte in dev_buf.iter()  {
-			// i2c_dev.smbus_write_byte_data(0x04, *byte).unwrap();
-			// thread::sleep(Duration::from_millis(10));
+	//     if buffer.split_whitespace().next().unwrap() == "spi" {
+	//     	spi_p.push( buffer);
+	//     }else 
+	//     if buffer.split_whitespace().next().unwrap() == "i2c" {
+	//     	i2c_p.push( buffer);
+	// 	}
 
-	  //   }
-	  	send_via_i2c(&i2c_dev, &dev_buf);
+	// i2c.join().unwrap();
+	// spi.join().unwrap();
 
 
-	    println!("{:?}", spidev.transfer(&mut trans));
 	}
 }
 
-
-// real code should probably not use unwrap()
-// fn main() {
-//     let mut dev = LinuxI2CDevice::new("/dev/i2c-1", SLAVE_ADDR).unwrap();
-//     let mut r_buf :[u8; 6] = [0; 6];
-//     // init sequence
-//     dev.smbus_write_byte_data(0x04, 1).unwrap();
-//     dev.smbus_write_byte_data(0x04, 2).unwrap();
-//     thread::sleep(Duration::from_millis(10));
-
-//     dev.read(&mut r_buf).unwrap();
-//     println!("{:?}",r_buf );
-// }
 
 

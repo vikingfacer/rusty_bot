@@ -9,3 +9,4 @@ libc ="0.2"
 i2cdev = "0.3.1"
 spidev = "0.3.0"
 
+magnetic = "2.0.0"

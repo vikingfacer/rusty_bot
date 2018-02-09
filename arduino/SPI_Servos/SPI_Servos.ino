@@ -72,52 +72,83 @@ ISR (SPI_STC_vect){
 void loop (void)
 { 
     int iop;
-    Message cur_msg;
+    Message cur_spi_msg;
+    Message cur_i2c_msg;
     if (spi_process_it)
     {
       buf [pos] = 0;  
       digitalWrite(13, HIGH);
       digitalWrite(13, LOW);
-      cur_msg = create_message(buf);
+      cur_spi_msg = create_spi_message(buf);
       // digitalWrite(cur_msg.Pin, cur_msg.Action);
       pos = 0;
       spi_process_it = false;
       digitalWrite(13, HIGH);
+      Serial.println("got spi message");
     }  // end of flag set
-
-    switch (cur_msg.Type){
-      case 's':
-      case 'S':
-//        Serial.println(index_of_pin(pm, 'S', cur_msg.Pin), DEC);
-        if( Degree_in_Range(cur_msg.Action)){
-                
-          if(cur_msg.Pin == Servo1Pin) Servo1.write(cur_msg.Action); 
-          if(cur_msg.Pin == Servo2Pin) Servo2.write(cur_msg.Action); 
-        }
-      break;
-      case 'd':
-      case 'D':
-          digitalWrite(cur_msg.Pin, cur_msg.Action);        
-      break;
-
-      default:
-//        Serial.println("Message is not good");
-      break;
-    }
-    reset_msg(cur_msg);
-    if(i2c_process_it){
+    
+    if (i2c_process_it)
+    {
       Serial.print("i2c: ");
       for(int i = 0; i <= i2cBufCount; i++){
         Serial.print(i2cBuf[i], HEX);
         Serial.print(", ");
       }
       Serial.print('\n');
-      i2c_process_it = false;
+      
+      i2cBuf [i2cBufCount] = 0;
+      cur_i2c_msg = create_i2c_message(i2cBuf);
       i2cBufCount = 0;
+      i2c_process_it = false;
+
     }
+
+    //  reset the messages 
+    process_message(cur_spi_msg);
+    process_message(cur_i2c_msg);
+
+    reset_msg(cur_spi_msg);
+    reset_msg(cur_i2c_msg);
+    
+//    if(i2c_process_it){
+//      Serial.print("i2c: ");
+//      for(int i = 0; i <= i2cBufCount; i++){
+//        Serial.print(i2cBuf[i], HEX);
+//        Serial.print(", ");
+//      }
+//      Serial.print('\n');
+//      
+//      i2c_process_it = false;
+//    }
 }  // end of loop
 
-Message create_message(int* mes)
+boolean Degree_in_Range(int degree){
+  return degree <= 180 && degree >= 0;
+}
+
+void process_message( Message msg)
+{
+      switch (msg.Type){
+      case 's':
+      case 'S':
+//        Serial.println(index_of_pin(pm, 'S', cur_msg.Pin), DEC);
+        if( Degree_in_Range(msg.Action)){
+                
+          if(msg.Pin == Servo1Pin) Servo1.write(msg.Action); 
+          if(msg.Pin == Servo2Pin) Servo2.write(msg.Action); 
+        }
+      break;
+      case 'd':
+      case 'D':
+          digitalWrite(msg.Pin, msg.Action);        
+      break;
+
+      default:
+//        Serial.println("Message is not good");
+      break;
+    }
+}
+Message create_spi_message(int* mes)
 {
   // Message is created from ~ (0x7E),<Type>, <Pin>, <Action>
   Message msg;
@@ -159,11 +190,34 @@ void receiveData(int byteCount){
       i2c_process_it = true;
     }
   }
-  
 }
 
-boolean Degree_in_Range(int degree){
-  return degree <= 180 && degree >= 0;
+Message create_i2c_message(int* mes){
+  Message msg;
+  for(int i = 0; i <= i2cBufCount; i++)
+  {
+    Serial.print (mes[i], HEX);
+    Serial.print(", ");
+    if(mes[i] == 0x7E)
+    {
+      if(i + 1 <= i2cBufCount)
+        msg.Type = mes[i + 1];
+        
+      if(i + 2 <= i2cBufCount)
+        msg.Pin = mes[i + 2];
+        
+      if(i + 3 <= i2cBufCount)
+        msg.Action = mes[i + 3];
+    }
+  }
+  Serial.print (msg.Type, HEX);
+  Serial.print(" ");
+  Serial.print (msg.Pin, HEX);
+  Serial.print(" ");  
+  Serial.print (msg.Action, HEX);
+  Serial.println(" ");
+
+  return msg;
 }
 
 
