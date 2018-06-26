@@ -1,3 +1,5 @@
+mod JonesLib::Messaging::*;
+
 extern crate magnetic;
 use std::thread::spawn;
 use std::thread;
@@ -19,22 +21,7 @@ use spidev::spidevioctl::SpidevTransfer;
 use std::io;
 use std::mem;
 
-fn parse_message(raw_mess : &String) -> Vec<u8>{
-	// mess
-	let mut message : Vec<u8>= Vec::new();
-	
-	message.push(0x7E);
-	message.push(raw_mess.as_bytes()[1]);
-	for word in raw_mess.split_whitespace(){
 
-		match word.trim().parse(){
-			Ok(my_num) => message.push(my_num),
-			Err(_) => continue,
-			};
-	}
-	message.push(0xA);
-	message
-}
 
 fn create_spi() -> io::Result<Spidev>{
 	let mut spidev = Spidev::open("/dev/spidev0.0").unwrap();
@@ -63,7 +50,7 @@ fn main() {
 	let (spi_p, spi_c) = spsc_queue(DynamicBuffer::new(32).unwrap());
 	let (i2c_p, i2c_c) = spsc_queue(DynamicBuffer::new(32).unwrap());
 
-	// i2c thread 
+	// i2c thread
 	let i2c = spawn(move || {
 	    loop {
 	        let i2c_buf = i2c_c.pop().unwrap();
@@ -85,7 +72,7 @@ fn main() {
 	});
 	// main thread
     loop {
-        
+
 	    println!("===== Single transfer =========");
 
 		let mut input = String::new();
@@ -117,14 +104,14 @@ fn main() {
 
 		}
 
-	// 	// parses message into arduino readable 
+	// 	// parses message into arduino readable
 	// 	let dev_buf : Vec<u8>= parse_message(&input);
 	// 	println!("{:?}",dev_buf );
 
 
 	//     if buffer.split_whitespace().next().unwrap() == "spi" {
 	//     	spi_p.push( buffer);
-	//     }else 
+	//     }else
 	//     if buffer.split_whitespace().next().unwrap() == "i2c" {
 	//     	i2c_p.push( buffer);
 	// 	}
@@ -135,6 +122,3 @@ fn main() {
 
 	}
 }
-
-
-
