@@ -3,7 +3,10 @@ ARDUINO_DIR  = /usr/share/arduino
 
 USER_LIB_PATH = ~/sketchbook/libraries
 
-BOARD_TAG = mega2560
--mmcu= atmega2560
+BOARD_TAG    = mega
+BOARD_SUB    = atmega2560
+MONITOR_PORT = /dev/ttyACM0
+ARDUINO_DIR  = /where/you/installed/arduino-1.6.5
+include /usr/share/arduino/Arduino.mk
 
 include /usr/share/arduino/Arduino.mk
