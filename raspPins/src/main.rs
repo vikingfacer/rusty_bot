@@ -1,4 +1,6 @@
-mod JonesLib::Messaging::*;
+mod JonesLib;
+
+use JonesLib::Messaging::Messaging::parse_message;
 
 extern crate magnetic;
 use std::thread::spawn;
@@ -38,6 +40,7 @@ fn create_spi() -> io::Result<Spidev>{
 fn send_via_i2c(i2cdev : &mut LinuxI2CDevice, msg : &Vec<u8>){
     for byte in msg.iter() {
 	(*i2cdev).smbus_write_byte_data(0x04, *byte).unwrap();
+	println!("hey");
 	thread::sleep(Duration::from_millis(10));
 	}
 }
@@ -53,7 +56,13 @@ fn main() {
 	// i2c thread
 	let i2c = spawn(move || {
 	    loop {
-	        let i2c_buf = i2c_c.pop().unwrap();
+	        let i2c_buf = match i2c_c.pop() {
+				Ok(n) => n,
+				Err(e) => {println!("badd input {:?}", e); vec![0xFF]}
+
+			};
+
+
 	        println!("i2c Consumed {:?}", i2c_buf);
 	        send_via_i2c(&mut i2c_dev, &i2c_buf);
 
