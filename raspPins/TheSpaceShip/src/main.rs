@@ -1,5 +1,5 @@
 extern crate JonesLib;
-use JonesLib::Messaging::Messaging::parse_message;
+use JonesLib::Messaging::Messaging::*;
 
 extern crate magnetic;
 use std::thread::spawn;
@@ -100,16 +100,35 @@ fn main() {
 
 		println!(" {:?} {:?}", i_or_s, buffer  );
 
-		let dev_buf : Vec<u8> = parse_message(&String::from(buffer));
-		println!("{:?}", dev_buf );
+		let msg : Message = parse_message(&String::from(buffer));
+		println!("{:?}", msg );
 
 		//  depending on what the message starts with decides what happens to it
 		if (i_or_s == "i") | (i_or_s == "I") {
-			i2c_p.push( dev_buf);
+			i2c_p.push( msg.to_msg_vec());
 
 		}else if (i_or_s == "s") | (i_or_s == "S") {
-			spi_p.push( dev_buf);
+			spi_p.push( msg.to_msg_vec());
 
+		}
+
+		match msg {
+			Message::digital{ref interface, ref pin, ref mode, ref action} => {
+				match interface as &str{
+					"spi" => spi_p.push(msg.to_msg_vec()).unwrap(), // the unwrap should eventually be handled
+					"i2c" => i2c_p.push(msg.to_msg_vec()).unwrap(),
+					_ => println!("error")
+				}
+			},
+			Message::servo{ref interface, ref pin, ref action} => {
+				match interface as &str{
+					"spi" => spi_p.push(msg.to_msg_vec()).unwrap(), // the unwrap should eventually be handled
+					"i2c" => i2c_p.push(msg.to_msg_vec()).unwrap(),
+					_ => println!("error")
+				}
+			},
+			_ => println!("Error Not analog or lcd is not implemented")
+			// all these prints will eventually be switched to error output
 		}
 
 	// 	// parses message into arduino readable
