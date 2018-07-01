@@ -8,9 +8,9 @@ pub mod Messaging{
 
     enum Message{
         error,
-        digital,
-        servo,
-        analog
+        digital{interface : String, pin: u16, mode : char, action : u8},
+        servo{interface : String, pin : u16, action : u8},
+        analog{interface : String, pin : u16, action : u8}
     }
 
     pub fn parse_message(raw_mess : &String) -> Vec<u8>{
