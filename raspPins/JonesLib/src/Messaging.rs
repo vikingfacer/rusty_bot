@@ -66,11 +66,22 @@ pub mod Messaging{
     }
 
     impl Message{
+        // Message is created from ~ (0x7E),<Type>, <Pin>, <Mode if digital>, <Action>
+
         pub fn to_msg_vec(&self) -> Vec<u8>{
+
+            let mut r_vec : Vec<u8> = vec![0x7E];
+
             match self {
-                Message::digital{ref interface,ref pin,ref mode,ref action} => vec![1, 2],
-                _ => vec![1, 2]
+                Message::digital{ref interface,ref pin,ref mode,ref action} =>{
+                    r_vec.push('D' as u8);
+                    r_vec.push(*pin);
+                    r_vec.push(*mode as u8);
+                    r_vec.push(*action);
+                },
+                _ => {}
             }
+            r_vec
         }
     }
 
