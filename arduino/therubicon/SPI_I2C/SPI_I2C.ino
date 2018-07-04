@@ -2,9 +2,7 @@
 #include <Wire.h>
 #include <Servo.h>
 #include <LiquidCrystal.h>
-#include "Messaging.h"
-
-//#include "Pin_Map.h"
+//#include "Messaging.h"
 
 int const SLAVE_ADDRESS = 0x04;
 int i2cBuf[100] = {0};
@@ -25,6 +23,21 @@ int buf [100];
 volatile byte pos;
 volatile boolean spi_process_it;
 
+
+////this is the defination of the message
+typedef struct message{
+  char Type;
+  int Pin;
+  int Action;
+  char Mode; // this only applies to the digital pins for now
+} Message;
+
+// forward declarations
+void process_message( Message msg);
+Message create_spi_message(int* mes);
+Message create_i2c_message(int* mes);
+void receiveData(int byteCount);
+void reset_msg(Message &msg);
 
 
 void setup() {
@@ -80,20 +93,25 @@ ISR (SPI_STC_vect){
 void loop (void)
 {
     int iop;
-    Message cur_spi_msg;
-    Message cur_i2c_msg;
+
     if (spi_process_it)
     {
+      for(int i = 0; i <= pos; i++){
+        Serial.print(buf[i]);
+        Serial.print(", ");
+      }
+      Serial.print('\n');
+
       buf [pos] = 0;
       digitalWrite(13, HIGH);
       digitalWrite(13, LOW);
-      cur_spi_msg = create_i2c_message(buf);
-      // digitalWrite(cur_msg.Pin, cur_msg.Action);
-      pos = 0;
-      spi_process_it = false;
       digitalWrite(13, HIGH);
+      
       Serial.println("got spi message");
-      process_message(cur_spi_msg);
+      process_message(buf, pos);
+      pos =0;
+      spi_process_it = false;
+      
     }  // end of flag set
 
     if (i2c_process_it)
@@ -105,20 +123,87 @@ void loop (void)
       }
       Serial.print('\n');
 
+      
       i2cBuf [i2cBufCount] = 0;
-      cur_i2c_msg = create_i2c_message(i2cBuf);
+      process_message(i2cBuf, i2cBufCount);
       i2cBufCount = 0;
       i2c_process_it = false;
-      process_message(cur_i2c_msg);
-
     }
 
-    //  reset the messages
-//    process_message(cur_spi_msg);
-//    process_message(cur_i2c_msg);
-
-    reset_msg(cur_spi_msg);
-    reset_msg(cur_i2c_msg);
-
-
 }  // end of loop
+
+boolean Degree_in_Range(int degree){
+  return degree <= 180 && degree >= 0;
+}
+
+void process_servo(int Pin, int Degree){
+ if( Degree_in_Range(Degree)){
+  
+    if(Pin == Servo1Pin) Servo1.write(Degree);
+    if(Pin == Servo2Pin) Servo2.write(Degree);
+    
+ }else{
+  Serial.print(Degree);
+  Serial.print(" Out of Degree range Obama!\n");
+ }
+}
+
+void process_digital(int Pin, int Mode, int Action){
+//    if mode r action does not matter 
+    if(Mode == 'w' || Mode == 'W'){
+       pinMode(Pin, OUTPUT);
+    }else
+      if(Mode == 'r' || Mode == 'R'){
+        pinMode(Pin, INPUT);
+    }
+    digitalWrite(Pin, Action);
+}
+
+void process_message(int* msg, int msgSize)
+{
+//    first byte is ~
+//    msg[1] ::= s, d, a, l, S, D, A, L 
+    int Pin;
+    int Degree;
+    int Action;
+    int Mode;
+
+    switch (msg[1]){
+      case 's':
+      case 'S':
+//        Serial.println(index_of_pin(pm, 'S', cur_msg.Pin), DEC);
+          Pin = msg[2];
+          Degree = msg[3];
+          process_servo( Pin, Degree);
+          
+      break;
+      case 'd':
+      case 'D':
+          Pin = msg[2];
+          Mode= msg[3];   
+          Action= msg[4];
+          process_digital(Pin, Mode, Action);
+      break;
+
+      default:
+//        Serial.println("Message is not good");
+      break;
+    }
+}
+
+
+///****** I2C functions****************/
+//// callback for received data
+void receiveData(int byteCount){
+  int number;
+  while(Wire.available()) {
+    number = Wire.read();
+  }
+  if(pos < sizeof i2cBuf){
+    i2cBuf[i2cBufCount++] = number;
+    if(number == '\n') {
+      i2c_process_it = true;
+    }
+  }
+}
+
