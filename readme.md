@@ -14,7 +14,7 @@
 * DevPin       ::= { PinType + Pin }
 * PinType      ::= { D | d | A | a | S | s }
 * Pin          ::= { u8 int }
-* PinAction    ::= { Read | WriteTerm }
+* PinAction    ::= { Read | WriteTerm + u8 int}
 * Read         ::= {R | r}
 * WriteTerm    ::= {W | w + u8}
 * Degreee      ::= {u8 int }
