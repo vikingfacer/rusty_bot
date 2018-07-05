@@ -45,9 +45,23 @@ mod tests {
 
     }
 
-    // #[test]
-    // fn implementation(){
-    //
-    // }
+    fn testing_new_parser(){
+        let digital_msg1 = Message::digital{interface: String::from("spi"), pin : 30, mode : 'w', action : 1};
+        let digital_msg2 = Message::digital{interface: String::from("i2c"), pin : 30, mode : 'w', action : 1};
+        let digital_msg3 = Message::digital{interface: String::from("i2c"), pin : 20, mode : 'r', action : 0};
+
+        let digital_err  = Message::error;
+
+        assert_eq!(digital_msg1, new_parser(&String::from("s d 30 w 1")));
+        assert_eq!(digital_msg1, new_parser(&String::from("S d 30 w 1")));
+        assert_eq!(digital_msg1, new_parser(&String::from("S D 30 w 1")));
+
+
+        assert_eq!(digital_msg2, new_parser(&String::from("i d 30 w 1")));
+        assert_eq!(digital_msg2, new_parser(&String::from("I d 30 w 1")));
+        assert_eq!(digital_msg3, new_parser(&String::from("I d 20 r 0")));
+
+        assert_eq!(digital_err, new_parser(&String::from("I d 30 1")));
+    }
 
 }

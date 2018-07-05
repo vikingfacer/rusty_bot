@@ -1,5 +1,6 @@
 pub mod Messaging{
 
+    use std::str;
     // inferface: SPI or I2C first index
     // type: digital Servo  (eventually Analog)
     // Pin: number
@@ -63,6 +64,103 @@ pub mod Messaging{
                 _ => Message::error
             }
         }
+    }
+
+    pub fn new_parser(raw_mess : &String) -> Message{
+        let mut parse_this : Vec<&str>  = raw_mess.split_whitespace().collect();
+        parse_this.reverse();
+        // this turns i d 30 w 1
+        //  to 1 w 30 d i
+        //  this is easier to process like an AST
+
+        // Message      ::= { Interface + Devterm }
+        // Interface    ::= { I | i | S | s }
+        let dev = match parse_this.pop() {
+            Some(n) => match n{
+                        "s" | "S" => "spi".to_string(),
+                        "i" | "I" => "i2c".to_string(),
+                            _     => return Message::error
+            },
+            None => return Message::error
+        };
+
+        let PinType = match parse_this.pop() {
+            Some(n) => match n{
+                        "d" | "D" => n.as_bytes()[0] as char,
+                        "a" | "A" => n.as_bytes()[0] as char,
+                        "s" | "S" => n.as_bytes()[0] as char,
+                        "l" | "L" => n.as_bytes()[0] as char,
+                            _     => return Message::error
+            },
+            None => return Message::error
+        };
+
+
+        match PinType {
+          'l' | 'L' => { let Lcdmsg = parse_this.reverse(); // this more then just reversed
+            /* parse_this will bee to be combined into a vector then turned to a vector of u8's */
+                    Message::error
+                    },
+         'd' | 'D' => {
+                    let Pin = match parse_this.pop() {
+                            Some( n) => match n.parse::<u8>(){ // this parses the &str into a u8 int
+                                  Ok(pin) => pin,
+                                  Err(_) => return Message::error
+                                  }
+                            None => return Message::error
+                            };
+
+                    let Mode = match parse_this.pop() {
+                                Some(n) => n.as_bytes()[0] as char,
+                                None => return Message::error
+                                };
+
+                    let Action = match parse_this.pop() {
+                                Some(n) => match n.parse::<u8>(){ // this parses the &str into a u8
+                                                Ok(pin) => pin,
+                                                Err(_) => return Message::error,
+                                                },
+                                None => return Message::error
+                                };
+                    Message::digital{interface : dev, pin : Pin, mode : Mode, action : Action}
+                    },
+          's' | 'S' => {
+                    let Pin = match parse_this.pop() {
+                            Some( n) => match n.parse::<u8>(){ // this parses the &str into a u8 int
+                                  Ok(pin) => pin,
+                                  Err(_) => return Message::error
+                                  }
+                            None => return Message::error
+                            };
+                    let Action = match parse_this.pop() {
+                                Some(n) => match n.parse::<u8>(){ // this parses the &str into a u8
+                                                Ok(pin) => pin,
+                                                Err(_) => return Message::error,
+                                                },
+                                None => return Message::error
+                                };
+                    Message::servo{interface : dev, pin : Pin, action : Action}
+                    },
+          'a' | 'A' => {
+                    let Pin = match parse_this.pop() {
+                            Some( n) => match n.parse::<u8>(){ // this parses the &str into a u8 int
+                                  Ok(pin) => pin,
+                                  Err(_) => return Message::error
+                                  }
+                            None => return Message::error
+                            };
+                    let Action = match parse_this.pop() {
+                                Some(n) => match n.parse::<u8>(){ // this parses the &str into a u8
+                                                Ok(pin) => pin,
+                                                Err(_) => return Message::error,
+                                                },
+                                None => return Message::error
+                                };                    
+                    Message::analog{interface : dev, pin : Pin, action : Action}
+                    },
+                  _=> Message::error
+      }
+        // parse_this
     }
 
     impl Message{
