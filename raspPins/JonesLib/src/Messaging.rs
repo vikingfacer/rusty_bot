@@ -150,6 +150,13 @@ pub mod Messaging{
                     r_vec.push(*pin);
                     r_vec.push(*action);
                     r_vec.push('\n' as u8);
+                },
+                Message::dcmove{ref interface, ref direction, ref speed} =>
+                {
+                    r_vec.push('M' as u8);
+                    r_vec.push(*direction as u8);
+                    r_vec.push(*speed);
+                    r_vec.push('\n' as u8);
                 }
                 _ => {}
             }
