@@ -93,7 +93,6 @@ ISR (SPI_STC_vect){
 void loop (void)
 {
     int iop;
-
     if (spi_process_it)
     {
       for(int i = 0; i <= pos; i++){
@@ -186,7 +185,7 @@ void process_message(int* msg, int msgSize)
       break;
 
       default:
-//        Serial.println("Message is not good");
+        Serial.println("Message is not good");
       break;
     }
 }

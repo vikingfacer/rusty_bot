@@ -94,23 +94,9 @@ fn main() {
 		    Err(error) => println!("error: {}", error),
 		}
 
-		let index : usize = input.find(' ').unwrap();
-
-		let (i_or_s, buffer) = input.split_at(index);
-
-		println!(" {:?} {:?}", i_or_s, buffer  );
-
-		let msg : Message = parse_message(&String::from(buffer));
+		let msg : Message = parser(&String::from(input));
 		println!("{:?}", msg );
 
-		//  depending on what the message starts with decides what happens to it
-		if (i_or_s == "i") | (i_or_s == "I") {
-			i2c_p.push( msg.to_msg_vec());
-
-		}else if (i_or_s == "s") | (i_or_s == "S") {
-			spi_p.push( msg.to_msg_vec());
-
-		}
 
 		match msg {
 			Message::digital{ref interface, ref pin, ref mode, ref action} => {
