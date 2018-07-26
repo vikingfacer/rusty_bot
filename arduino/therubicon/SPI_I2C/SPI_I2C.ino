@@ -15,8 +15,16 @@ const int Servo1Pin = 12;
 Servo Servo2;
 const int Servo2Pin = 11;
 
+const int EnableLeft = 2;
+const int EnableRight= 7;
+const int LeftForward= 4;
+const int LeftBackward=3;
+const int RightForward=5;
+const int RightBackward=6;
 
-// this is the display
+
+
+//// this is the display
 LiquidCrystal lcd(1,2,4,5,6,7);
 
 int buf [100];
@@ -51,6 +59,21 @@ void setup() {
   Servo2.attach(Servo2Pin);
   Servo2.write(90);
 
+  /****DC*MOTORS*******/
+  pinMode(EnableLeft, OUTPUT);
+  pinMode(EnableRight,OUTPUT);
+  pinMode(LeftForward,OUTPUT);
+  pinMode(LeftBackward,OUTPUT);
+  pinMode(RightForward,OUTPUT);
+  pinMode(RightBackward,OUTPUT);
+  
+  digitalWrite(EnableLeft,0);
+  digitalWrite(EnableRight,0);
+  digitalWrite(LeftForward,0);
+  digitalWrite(LeftBackward,0);
+  digitalWrite(RightForward,0);
+  digitalWrite(RightBackward,0);
+    
   /*****DISPLAY*****/
   lcd.begin(16,2);
 
@@ -158,6 +181,67 @@ void process_digital(int Pin, int Mode, int Action){
     digitalWrite(Pin, Action);
 }
 
+void process_Motor(int Direction, int Speed){
+  
+    switch (Direction){
+      case 'f':
+      case 'F':
+          analogWrite(EnableLeft,Speed);
+          analogWrite(EnableRight,Speed);
+          digitalWrite(LeftForward,1);
+          digitalWrite(LeftBackward,0);
+          digitalWrite(RightForward,1);
+          digitalWrite(RightBackward,0);
+      break;
+      case 'b':
+      case 'B':
+          analogWrite(EnableLeft,Speed);
+          analogWrite(EnableRight,Speed);
+          digitalWrite(LeftForward,0);
+          digitalWrite(LeftBackward,1);
+          digitalWrite(RightForward,0);
+          digitalWrite(RightBackward,1);
+      break;
+      case 'l':
+      case 'L':
+          analogWrite(EnableLeft,Speed);
+          analogWrite(EnableRight,Speed);
+          digitalWrite(LeftForward,1);
+          digitalWrite(LeftBackward,0);
+          digitalWrite(RightForward,0);
+          digitalWrite(RightBackward,0);
+      break;
+      
+      case 'r':
+      case 'R':
+          analogWrite(EnableLeft,Speed);
+          analogWrite(EnableRight,Speed);
+          digitalWrite(LeftForward,0);
+          digitalWrite(LeftBackward,0);
+          digitalWrite(RightForward,1);
+          digitalWrite(RightBackward,0); 
+      break;
+      
+      case 's':
+      case 'S':
+          analogWrite(EnableLeft,Speed);
+          analogWrite(EnableRight,Speed);
+          digitalWrite(LeftForward,0);
+          digitalWrite(LeftBackward,0);
+          digitalWrite(RightForward,0);
+          digitalWrite(RightBackward,0);
+      break;
+      
+      default:
+          Serial.print("direction: ");
+          Serial.print(Direction);
+          Serial.print("Speed: ");
+          Serial.print(Speed);                        
+      break;
+    }
+}
+
+
 void process_message(int* msg, int msgSize)
 {
 //    first byte is ~
@@ -166,6 +250,8 @@ void process_message(int* msg, int msgSize)
     int Degree;
     int Action;
     int Mode;
+    int Speed = 0;
+    int Direction = 'f';
 
     switch (msg[1]){
       case 's':
@@ -183,7 +269,11 @@ void process_message(int* msg, int msgSize)
           Action= msg[4];
           process_digital(Pin, Mode, Action);
       break;
-
+      case 'm':
+      case 'M':
+          Direction = msg[2];
+          Speed = msg[3];
+          process_Motor(Direction, Speed);
       default:
         Serial.println("Message is not good");
       break;

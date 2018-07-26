@@ -103,16 +103,23 @@ fn main() {
 				match interface as &str{
 					"spi" => spi_p.push(msg.to_msg_vec()).unwrap(), // the unwrap should eventually be handled
 					"i2c" => i2c_p.push(msg.to_msg_vec()).unwrap(),
-					_ => println!("error")
+					_ => println!("interface unspecified")
 				}
 			},
 			Message::servo{ref interface, ref pin, ref action} => {
 				match interface as &str{
 					"spi" => spi_p.push(msg.to_msg_vec()).unwrap(), // the unwrap should eventually be handled
 					"i2c" => i2c_p.push(msg.to_msg_vec()).unwrap(),
-					_ => println!("error")
+					_ => println!("interface unspecified")
 				}
 			},
+			Message::dcmove{ref interface, ref direction, ref speed} => {
+				match interface as &str {
+					"spi" => spi_p.push(msg.to_msg_vec()).unwrap(),
+					"i2c" => i2c_p.push(msg.to_msg_vec()).unwrap(),
+					_ => println!("interface unspecified")
+				}
+			}
 			_ => println!("Error Not analog or lcd is not implemented")
 			// all these prints will eventually be switched to error output
 		}
