@@ -1,0 +1,8 @@
+[package]
+name = "ArController"
+version = "0.1.0"
+authors = ["vikingfacer <jacobmontpetit@gmail.com>"]
+
+[dependencies]
+serial = "0.4.0"
+ws = "*"

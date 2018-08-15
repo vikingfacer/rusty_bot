@@ -1,4 +1,5 @@
-all:
+commandList = build clean run 
+all: run clean
 
 build:
 	cargo build
