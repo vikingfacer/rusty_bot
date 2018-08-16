@@ -1,3 +1,6 @@
+
+//#define DEBUG 
+
 #include <math.h>
 //pins
 const int Y = 21;
@@ -42,7 +45,7 @@ void loop() {
   float x = analogRead(X) - init_x;
   float mag = pythagerian(x, y);
 
-
+  #ifdef DEBUG
   Serial.print(x);
   Serial.print(" , ");
   Serial.print(unitize(x,mag));
@@ -57,6 +60,11 @@ void loop() {
   Serial.print("  ");
   Serial.print(process_speed(mag));
   Serial.print("\n");
+  #else
+  Serial.print(process_direction(x, y, mag));
+  Serial.print("  ");
+  Serial.print(process_speed(mag));
+  #endif
 
   delay(1000);
 
