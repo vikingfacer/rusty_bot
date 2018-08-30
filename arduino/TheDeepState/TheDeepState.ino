@@ -10,6 +10,8 @@ const int X = 14;
 float init_x;float init_y;
 
 const float limit = 0.70710678118; //this is 45 degrees on the unit circle, which is our limit
+int incoming_byte = 0;
+
 
 enum speed{
   slow = 100,
@@ -20,7 +22,16 @@ enum speed{
 void setup() {
   // put your setup code here, to run once:
   pinMode(2, OUTPUT);
+  pinMode(3, OUTPUT);
+  pinMode(4, OUTPUT);
   digitalWrite(2, 1);
+  digitalWrite(3, 0);
+  #ifdef DEBUG
+  digitalWrite(4, 1);
+  #else
+  digitalWrite(4, 0);
+  #endif
+  
   pinMode(19, INPUT);
   Serial.begin(115200);
 
@@ -30,6 +41,8 @@ void setup() {
   Serial.print(init_x);
   Serial.print(" ");
   Serial.print(init_y);
+  delay(100);
+  digitalWrite(2,0);
 
 }
 
@@ -62,10 +75,20 @@ void loop() {
   Serial.print("\n");
   #else
   Serial.print(process_direction(x, y, mag));
-  Serial.print("  ");
+  Serial.print(" ");
   Serial.print(process_speed(mag));
+  Serial.print("\n");
   #endif
 
+  if (Serial.available() > 0){
+      incoming_byte = Serial.read();
+      if(incoming_byte != 0){
+        digitalWrite(3,1);
+        incoming_byte = 0;
+      }
+      
+  }
+  digitalWrite(3,0);
   delay(1000);
 
 }

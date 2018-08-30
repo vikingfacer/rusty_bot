@@ -5,15 +5,15 @@ use std::env;
 use std::io;
 use std::time::Duration;
 use std::ffi::OsString;
-use std::net::TcpStream;
+use std::net::{TcpStream, Shutdown};
 
 use std::io::prelude::*;
 use serial::prelude::*;
 use serial::*;
-use std::io::{BufReader, Write};
+use std::io::{BufReader, Write, BufWriter};
 
 // this program needs a serial device to listen to.
-fn create_serialA_conn(dev : &OsString ) -> Result<SystemPort>
+fn create_serial_conn(dev : &OsString ) -> Result<SystemPort>
 {
     match serial::open(dev) {
         Ok(mut n) => {n.configure(&PortSettings {
@@ -31,7 +31,12 @@ fn main() {
     let env_var : Vec<OsString> = env::args_os().skip(1).collect();
     println!("{:?}", env_var);
 
-    let mut port = create_serialA_conn(&env_var[0]).unwrap();
+    let mut port = match create_serial_conn(&env_var[0]) {
+        Ok(serial) => serial,
+        Err(n) => {println!("{:?}", n);
+                    return}
+    };
+
     let reader = BufReader::new(port);
     let mut stream = match TcpStream::connect("127.0.0.1:8080") {
             Ok(s) => s,
@@ -39,12 +44,16 @@ fn main() {
                         return;}
             };
 
+    let mut print = true;
     for line in reader.lines() {
         if line.is_ok() {
-           // println!("{:?}",  &line.unwrap());
-           stream.write(line.unwrap().as_bytes());
-        }
-        }
+           // println!("{:?}", line.unwrap_or("this broke".to_string()));
+           let mut transmit_str : String = "I M ".to_owned() + &line.unwrap();
 
+           stream.write(transmit_str.as_bytes());
+           print = true;
+       }
+    }
+    stream.shutdown(Shutdown::Both);
     // port.reconfigure
 }
