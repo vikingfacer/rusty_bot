@@ -40,8 +40,11 @@ fn create_spi() -> io::Result<Spidev>{
 
 fn send_via_i2c(i2cdev : &mut LinuxI2CDevice, msg : &Vec<u8>){
     for byte in msg.iter() {
-	(*i2cdev).smbus_write_byte_data(0x04, *byte).unwrap();
-	println!("hey");
+		match (*i2cdev).smbus_write_byte_data(0x04, *byte){
+			Ok(_) => continue,
+			Err(e)=> println!("{:?}", e)
+		}
+
 	thread::sleep(Duration::from_millis(10));
 	}
 }
