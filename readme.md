@@ -23,3 +23,21 @@
 * LCD          ::= { L | l }
 * LCDmsg       ::= { char* }
 
+
+
+Controller pins:
+sw	hdw
+	A4 : Right Y axis joystick
+	A5 : Right X axis joystick
+	A6 : Left  X axis joystick
+	A7 : Left  Y axis joystick
+
+	
+	D12: Left  Button read
+	D10: Right Button read
+
+
+	D6 : Right green  LED 
+	D5 : Left  green  LED
+	D4 : Right yellow LED
+	D2 : red   LED 

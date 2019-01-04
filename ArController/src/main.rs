@@ -11,6 +11,7 @@ use std::io::prelude::*;
 use serial::prelude::*;
 use serial::*;
 use std::io::{BufReader, Write, BufWriter};
+use std::string::String;
 
 // this program needs a serial device to listen to.
 fn create_serial_conn(dev : &OsString ) -> Result<SystemPort>
@@ -30,6 +31,10 @@ fn create_serial_conn(dev : &OsString ) -> Result<SystemPort>
 fn main() {
     let env_var : Vec<OsString> = env::args_os().skip(1).collect();
     println!("{:?}", env_var);
+    if env_var.len() < 2 {
+        println!("two few arguments specify Serial Device, and IP connection" );
+        return
+    }
 
     let mut port = match create_serial_conn(&env_var[0]) {
         Ok(serial) => serial,
@@ -38,7 +43,10 @@ fn main() {
     };
 
     let reader = BufReader::new(port);
-    let mut stream = match TcpStream::connect("127.0.0.1:8080") {
+
+
+    let ip = String::from(env_var[1].to_str().unwrap());
+    let mut stream = match TcpStream::connect( ip + &":8080".to_owned()) {
             Ok(s) => s,
             Err(e) => {println!("error: {:?}", e);
                         return;}

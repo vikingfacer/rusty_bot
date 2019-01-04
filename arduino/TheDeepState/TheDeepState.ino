@@ -4,10 +4,11 @@
 #include <math.h>
 //pins
 const int Y = 21;
-const int X = 14;
-
+const int X = 20;
+const int X2= 19;
+const int Y2= 18;
 //constants that are not constants cause arduino is for dummies
-float init_x;float init_y;
+float init_x;float init_y; float init_x2; float init_y2;
 
 const float limit = 0.70710678118; //this is 45 degrees on the unit circle, which is our limit
 int incoming_byte = 0;
@@ -38,6 +39,9 @@ void setup() {
 //  get intial values of the x y
   init_x = analogRead(X);
   init_y = analogRead(Y);
+  init_x2= analogRead(X2);
+  init_y2= analogRead(Y2);
+  
   Serial.print(init_x);
   Serial.print(" ");
   Serial.print(init_y);
@@ -58,6 +62,10 @@ void loop() {
   float x = analogRead(X) - init_x;
   float mag = pythagerian(x, y);
 
+  float y2 = analogRead(Y2) - init_y2;
+  float x2 = analogRead(X2) - init_x2;
+  float mag2 = pythagerian(x2, y2);
+
   #ifdef DEBUG
   Serial.print(x);
   Serial.print(" , ");
@@ -73,10 +81,25 @@ void loop() {
   Serial.print("  ");
   Serial.print(process_speed(mag));
   Serial.print("\n");
+  // joystick 2
+  Serial.print(x2);
+  Serial.print(" , ");
+  Serial.print(unitize(x2,mag2));
+  Serial.print("  ");
+  Serial.print(y2);
+  Serial.print(" , ");
+  Serial.print(unitize(x2,mag2));
+  Serial.print("  ");
+  Serial.print(pythagerian(x2, y2));
+  Serial.print(" dir: ");
+  Serial.print(process_direction(x2, y2, mag2));
+  Serial.print("  ");
+  Serial.print(process_speed(mag2));
+  Serial.print("\n");
   #else
-  Serial.print(process_direction(x, y, mag));
+  Serial.print(process_direction(x2, y2, mag2));
   Serial.print(" ");
-  Serial.print(process_speed(mag));
+  Serial.print(process_speed(mag2));
   Serial.print("\n");
   #endif
 
