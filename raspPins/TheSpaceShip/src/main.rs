@@ -22,6 +22,8 @@ use spidev::spidevioctl::SpidevTransfer;
 use std::io;
 use std::mem;
 
+use std::net::{TcpListener, Shutdown};
+use std::io::Read;
 
 
 fn create_spi() -> io::Result<Spidev>{
@@ -38,9 +40,73 @@ fn create_spi() -> io::Result<Spidev>{
 
 fn send_via_i2c(i2cdev : &mut LinuxI2CDevice, msg : &Vec<u8>){
     for byte in msg.iter() {
-	(*i2cdev).smbus_write_byte_data(0x04, *byte).unwrap();
-	println!("hey");
+		match (*i2cdev).smbus_write_byte_data(0x04, *byte){
+			Ok(_) => continue,
+			Err(e)=> println!("{:?}", e)
+		}
+
 	thread::sleep(Duration::from_millis(10));
+	}
+}
+
+
+fn receive_msg(mut stream : &std::net::TcpStream ) -> Option<String>{
+
+    let mut ret_str  = String::new();
+    let mut buffer = [0; 50];
+
+    match stream.read(&mut buffer) {
+
+        Err(e) => {
+            println!("{:?}", e);
+            None
+            },
+        Ok(_) => {
+            for i in buffer.iter()
+            {
+                if *i != 0 as u8
+                {
+                    ret_str.push(*i as char);
+                }
+            }
+
+            if ret_str.len() > 0
+            {
+                Some(ret_str)
+            }
+            else
+            {
+                None
+            }
+        }
+    }
+}
+
+fn push_to_thread(spi_p : &Producer<Vec<u8>>, i2c_p : &Producer<Vec<u8>>, msg : Message) {
+	match msg {
+		Message::digital{ref interface, ref pin, ref mode, ref action} => {
+			match interface as &str{
+				"spi" => spi_p.push(msg.to_msg_vec()).unwrap(), // the unwrap should eventually be handled
+				"i2c" => i2c_p.push(msg.to_msg_vec()).unwrap(),
+				_ => println!("interface unspecified")
+			}
+		},
+		Message::servo{ref interface, ref pin, ref action} => {
+			match interface as &str{
+				"spi" => spi_p.push(msg.to_msg_vec()).unwrap(), // the unwrap should eventually be handled
+				"i2c" => i2c_p.push(msg.to_msg_vec()).unwrap(),
+				_ => println!("interface unspecified")
+			}
+		},
+		Message::dcmove{ref interface, ref direction, ref speed} => {
+			match interface as &str {
+				"spi" => spi_p.push(msg.to_msg_vec()).unwrap(),
+				"i2c" => i2c_p.push(msg.to_msg_vec()).unwrap(),
+				_ => println!("interface unspecified")
+			}
+		}
+		_ => println!("Error Not analog or lcd is not implemented")
+		// all these prints will eventually be switched to error output
 	}
 }
 
@@ -55,90 +121,76 @@ fn main() {
 	// i2c thread
 	let i2c = spawn(move || {
 	    loop {
-	        let i2c_buf = match i2c_c.pop() {
-				Ok(n) => n,
-				Err(e) => {println!("badd input {:?}", e); vec![0xFF]}
+	        let i2c_buf : Option<Vec<u8>> = match i2c_c.pop() {
+				Ok(n) => Some(n),
+				Err(e) => {
+					println!("badd input {:?}", e);
+					None
+					}
 
 			};
 
-
 	        println!("i2c Consumed {:?}", i2c_buf);
-	        send_via_i2c(&mut i2c_dev, &i2c_buf);
-
-	    }
+			match i2c_buf{
+	        	Some(ref i2c_buf) => send_via_i2c(&mut i2c_dev, i2c_buf),
+				None => continue
+			}
+		}
 	});
 
 	// spi thread
 	let spi = spawn(move || {
 	    loop {
-	        let spi_buf :Vec<u8> = spi_c.pop().unwrap();
-	        println!("spi Consumed {:?}", spi_buf);
-		    let mut trans = SpidevTransfer::write(&spi_buf[..]);
-		    println!("{:?}", spidev.transfer(&mut trans));
+	        let spi_buf : Option<Vec<u8>> =
+			match spi_c.pop() {
+	        	Ok(spi_buf) =>{
+					println!("spi Consumed {:?}", spi_buf);
+					Some(spi_buf)
+				},
+				Err(e) => {
+					println!("{:?}", e);
+					None
+				}
+	    	};
+			match spi_buf {
+    			Some(ref buf) =>{
+					let mut trans = SpidevTransfer::write( &buf[..]);
+					println!("{:?}", spidev.transfer(&mut trans));
+				},
+				None => continue
+			}
+		}
+		});
 
-	    }
-	});
+	let listener : TcpListener = match TcpListener::bind("0.0.0.0:8080") {
+                Ok(s) => s,
+                Err(e)=> {println!("you done gooffed {:?}", e);
+                            return;}
+    };
+
 	// main thread
     loop {
-
-	    println!("===== Single transfer =========");
-
-		let mut input = String::new();
-
-		// reads in the line from std
-		match io::stdin().read_line(&mut input) {
-		    Ok(n) => {
-		        println!("{} bytes read", n);
-		        println!("{}", input);
-		    }
-		    Err(error) => println!("error: {}", error),
-		}
-
-		let msg : Message = parser(&String::from(input));
-		println!("{:?}", msg );
-
-
-		match msg {
-			Message::digital{ref interface, ref pin, ref mode, ref action} => {
-				match interface as &str{
-					"spi" => spi_p.push(msg.to_msg_vec()).unwrap(), // the unwrap should eventually be handled
-					"i2c" => i2c_p.push(msg.to_msg_vec()).unwrap(),
-					_ => println!("interface unspecified")
+		match listener.accept() {
+			Ok((mut _socket, addr)) => {
+				println!("new client: {:?}", addr);
+				loop{
+					match receive_msg(&_socket) {
+						Some(strr) =>{
+							println!("{:?}",&strr);
+							push_to_thread(&spi_p, &i2c_p, parser(&String::from(strr)));
+						}
+						None => {
+							println!("none");
+							break;
+						}
+					};
+				}
+				match _socket.shutdown(Shutdown::Both){
+					Ok(r) => println!("socket shut down {:?}", r),
+					Err(e)=> println!("{:?}", e)
 				}
 			},
-			Message::servo{ref interface, ref pin, ref action} => {
-				match interface as &str{
-					"spi" => spi_p.push(msg.to_msg_vec()).unwrap(), // the unwrap should eventually be handled
-					"i2c" => i2c_p.push(msg.to_msg_vec()).unwrap(),
-					_ => println!("interface unspecified")
-				}
-			},
-			Message::dcmove{ref interface, ref direction, ref speed} => {
-				match interface as &str {
-					"spi" => spi_p.push(msg.to_msg_vec()).unwrap(),
-					"i2c" => i2c_p.push(msg.to_msg_vec()).unwrap(),
-					_ => println!("interface unspecified")
-				}
-			}
-			_ => println!("Error Not analog or lcd is not implemented")
-			// all these prints will eventually be switched to error output
+			Err(e) => println!("couldn't get client: {:?}", e),
 		}
-
-	// 	// parses message into arduino readable
-	// 	let dev_buf : Vec<u8>= parse_message(&input);
-	// 	println!("{:?}",dev_buf );
-
-
-	//     if buffer.split_whitespace().next().unwrap() == "spi" {
-	//     	spi_p.push( buffer);
-	//     }else
-	//     if buffer.split_whitespace().next().unwrap() == "i2c" {
-	//     	i2c_p.push( buffer);
-	// 	}
-
-	// i2c.join().unwrap();
-	// spi.join().unwrap();
-
-
 	}
 }
