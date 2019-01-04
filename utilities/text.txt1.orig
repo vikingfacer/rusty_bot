@@ -1,0 +1,92 @@
+#generated Thu Jan  3 20:17:49 EST 2019 from /home/jacob/rusty_bot/utilities ./shellprac.sh
+{
+#2.4GHz setup wifi 80211 b,g,n
+interface=wlan0
+driver=nl80211
+ssid=AlexaJones
+hw_mode=g
+channel=8
+wmm_enabled=0
+macaddr_acl=0
+auth_algs=1
+ignore_broadcast_ssid=0
+wpa=2
+wpa_passphrase=floridefrogs
+wpa_key_mgmt=WPA-PSK
+wpa_pairwise=CCMP TKIP
+rsn_pairwise=CCMP
+
+#80211n - Change GB to your WiFi country code
+country_code=US
+ieee80211n=1
+ieee80211d=1
+ }
+#generated Thu Jan  3 20:19:31 EST 2019 from /home/jacob/rusty_bot/utilities ./shellprac.sh
+{
+#2.4GHz setup wifi 80211 b,g,n
+interface=wlan0
+driver=nl80211
+ssid=AlexaJones
+hw_mode=g
+channel=8
+wmm_enabled=0
+macaddr_acl=0
+auth_algs=1
+ignore_broadcast_ssid=0
+wpa=2
+wpa_passphrase=floridefrogs
+wpa_key_mgmt=WPA-PSK
+wpa_pairwise=CCMP TKIP
+rsn_pairwise=CCMP
+
+#80211n - Change GB to your WiFi country code
+country_code=US
+ieee80211n=1
+ieee80211d=1
+ }
+#generated Thu Jan  3 20:19:40 EST 2019 from /home/jacob/rusty_bot/utilities ./shellprac.sh
+{
+#2.4GHz setup wifi 80211 b,g,n
+interface=wlan0
+driver=nl80211
+ssid=AlexaJones
+hw_mode=g
+channel=8
+wmm_enabled=0
+macaddr_acl=0
+auth_algs=1
+ignore_broadcast_ssid=0
+wpa=2
+wpa_passphrase=floridefrogs
+wpa_key_mgmt=WPA-PSK
+wpa_pairwise=CCMP TKIP
+rsn_pairwise=CCMP
+
+#80211n - Change GB to your WiFi country code
+country_code=US
+ieee80211n=1
+ieee80211d=1
+ }
+#generated Thu Jan  3 20:20:25 EST 2019 from /home/jacob/rusty_bot/utilities ./shellprac.sh
+{
+#2.4GHz setup wifi 80211 b,g,n
+interface=wlan0
+driver=nl80211
+ssid=AlexaJones
+hw_mode=g
+channel=8
+wmm_enabled=0
+macaddr_acl=0
+auth_algs=1
+ignore_broadcast_ssid=0
+wpa=2
+wpa_passphrase=floridefrogs
+wpa_key_mgmt=WPA-PSK
+wpa_pairwise=CCMP TKIP
+rsn_pairwise=CCMP
+
+#80211n - Change GB to your WiFi country code
+country_code=US
+ieee80211n=1
+ieee80211d=1
+ }
