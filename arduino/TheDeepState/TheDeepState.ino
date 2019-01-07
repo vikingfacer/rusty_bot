@@ -1,37 +1,28 @@
-
-//#define DEBUG
+//
+//#define DEBUG2
+//#define DEBUG1
 
 #include <math.h>
-<<<<<<< HEAD
 //pins
-const int Y = 21;
-const int X = 20;
-const int X2= 19;
-const int Y2= 18;
-//constants that are not constants cause arduino is for dummies
-float init_x;float init_y; float init_x2; float init_y2;
-=======
-//pins 
-// joystick 1 const dc motors
 const int Y1 = 21;
 const int X1 = 20;
+const int X2= 19;
+const int Y2= 18;
 const int stop1 = 12;
-
-// joystick 2 const servos
-const int Y2 = 18;
-const int X2 = 19;
 const int stop2 = 10;
+const int servo_pitch = 12;
+const int servo_yaw= 11;
 
 //constants that are not constants cause arduino is for dummies
-float init_x1;float init_y1;float init_x2;float init_y2;
+float init_x1;float init_y1; float init_x2; float init_y2;
 
->>>>>>> 22039ae48860b714c7ba0cbf98c240bae962a400
 
 const float limit = 0.70710678118; //this is 45 degrees on the unit circle, which is our limit
 int incoming_byte = 0;
 
 
 enum speed{
+  stop = 0,
   slow = 100,
   medium=200,
   high = 255,
@@ -62,18 +53,12 @@ void setup() {
   Serial.begin(115200);
 
 //  get intial values of the x y
-<<<<<<< HEAD
-  init_x = analogRead(X);
-  init_y = analogRead(Y);
+  init_x1 = analogRead(X1);
+  init_y1 = analogRead(Y1);
   init_x2= analogRead(X2);
   init_y2= analogRead(Y2);
   
-  Serial.print(init_x);
-=======
-  init_x1 = analogRead(X1);
-  init_y1 = analogRead(Y1);
   Serial.print(init_x1);
->>>>>>> 22039ae48860b714c7ba0cbf98c240bae962a400
   Serial.print(" ");
   Serial.print(init_y1);
   delay(100);
@@ -93,9 +78,11 @@ void setup() {
 
 float unitize(const float& num, const float& mag);
 float pythagerian(const float& x,const float& y);
-char process_direction(const bool& inverte, const float& x_in, const float& y_in, const float& mag);
-speed process_speed(const float& mag);
-void push_to_serial(const char& dev, const int& x, const int& y, const int& init_x, const int& init_y);
+char process_direction(const bool& inverted, const float& x_in, const float& y_in, const float& mag);
+speed process_speed(const float& mag, const float& avg_mag );
+void js_in_motor_to_serial(const char& dev, const int& X, const int& Y, const int& init_x, const int& init_y, const bool& inverted);
+void js_in_servo_to_serial(const char& dev, const int& axis,const int& read_pin, const int& init_axis, const bool& inverted, int& axis_degree);
+
 //bool toggle_button(const int& pin);
 
   
@@ -105,7 +92,8 @@ bool toggle1 = false;
 bool toggle2 = false;
   int last_read1 = 0;
   int last_read2 = 0;
- 
+  int pitch = 90;
+  int yaw = 90;
   
 void loop() {
 
@@ -126,64 +114,40 @@ void loop() {
   if(last_read2 != current_read2){
     dev2On = !dev2On;
     digitalWrite(6,dev2On);
+  }
 
-<<<<<<< HEAD
+// usable readings 
+  float y1 = analogRead(Y1) - init_y1;
+  float x1 = analogRead(X1) - init_x1;
+  float mag1 = pythagerian(x1, y1);
+
   float y2 = analogRead(Y2) - init_y2;
   float x2 = analogRead(X2) - init_x2;
   float mag2 = pythagerian(x2, y2);
 
-  #ifdef DEBUG
-  Serial.print(x);
-  Serial.print(" , ");
-  Serial.print(unitize(x,mag));
-  Serial.print("  ");
-  Serial.print(y);
-  Serial.print(" , ");
-  Serial.print(unitize(x,mag));
-  Serial.print("  ");
-  Serial.print(pythagerian(x, y));
-  Serial.print(" dir: ");
-  Serial.print(process_direction(x, y, mag));
-  Serial.print("  ");
-  Serial.print(process_speed(mag));
-  Serial.print("\n");
-  // joystick 2
-  Serial.print(x2);
-  Serial.print(" , ");
-  Serial.print(unitize(x2,mag2));
-  Serial.print("  ");
-  Serial.print(y2);
-  Serial.print(" , ");
-  Serial.print(unitize(x2,mag2));
-  Serial.print("  ");
-  Serial.print(pythagerian(x2, y2));
-  Serial.print(" dir: ");
-  Serial.print(process_direction(x2, y2, mag2));
-  Serial.print("  ");
-  Serial.print(process_speed(mag2));
-  Serial.print("\n");
-  #else
-  Serial.print(process_direction(x2, y2, mag2));
-  Serial.print(" ");
-  Serial.print(process_speed(mag2));
-=======
-  }
-  
-  #ifdef DEBUG
-  Serial.print("button1: ");
-  Serial.print(digitalRead(stop1));
-  Serial.print("    ");
-  Serial.print("button2: ");
-  Serial.print(digitalRead(stop2));
->>>>>>> 22039ae48860b714c7ba0cbf98c240bae962a400
-  Serial.print("\n");
-  #endif
   
   if(dev1On){
-    push_to_serial('m', X1, Y1, init_x1, init_y1);
+    // left joystick 
+    js_in_motor_to_serial('i', X1, Y1, init_x1, init_y1, true);
   }  
+  else
+  {
+    Serial.print('I');
+    Serial.println(" m s 0");
+    Serial.print('\0');
+  }
+  
   if(dev2On){
-    push_to_serial('s', X2, Y2, init_x2, init_y2);
+    // right joystick
+    js_in_servo_to_serial('s', servo_pitch, Y2, init_y2, false, pitch); 
+    // pitch
+
+    
+    Serial.print('\0');
+    delay(100);
+    js_in_servo_to_serial('s', servo_yaw, X2, init_x2, false, yaw); 
+    // yaw 
+
   }
 
   if (Serial.available()){
@@ -223,10 +187,10 @@ char process_direction(const bool& inverted, const float& x_in, const float& y_i
             return 'f';// values are inverted on the joystick
           }else
           if(x > limit && y_in_range){
-            return 'r';
+            return 'l';
           }else
           if(x < -limit && y_in_range){
-            return 'l';
+            return 'r';
           }
       }else{
         if (y > limit && x_in_range) {
@@ -236,10 +200,10 @@ char process_direction(const bool& inverted, const float& x_in, const float& y_i
             return 'b';// values are inverted on the joystick
           }else
           if(x > limit && y_in_range){
-            return 'l';
+            return 'r';
           }else
           if(x < -limit && y_in_range){
-            return 'r';
+            return 'l';
           }
       }
     }
@@ -247,9 +211,8 @@ char process_direction(const bool& inverted, const float& x_in, const float& y_i
   return 's';
 }
 
-speed process_speed(const float& mag,const int& init_x, const int& init_y){
+speed process_speed(const float& mag, const float& avg_mag ){
   // these are globals and suck
-  float avg_mag = (init_x + init_y)/2;
   float noise_floor, slow_rang_top, mid_rang_top;
   noise_floor = avg_mag * .25;
   slow_rang_top = avg_mag * .5;
@@ -264,45 +227,74 @@ speed process_speed(const float& mag,const int& init_x, const int& init_y){
   if(mag <= slow_rang_top && mag > noise_floor){
     return slow;
   }
-  return slow;
+  return stop;
 }
 
 // need to add title of device it represent ie: dc motors, servo
-void push_to_serial(const char& dev, const int& X, const int& Y, const int& init_x, const int& init_y)
+void js_in_motor_to_serial(const char& dev, const int& X, const int& Y, const int& init_x, const int& init_y, const bool& inverted)
 {
   
-  //this sets up the "cordant system"
   float y = analogRead(Y) - init_y;
   float x = analogRead(X) - init_x;
   float mag = pythagerian(x, y);
 
-  #ifdef DEBUG
-  Serial.print("dev:");
   Serial.print(dev);
-  Serial.print(" ,");
-  Serial.print(x);
-  Serial.print(" , ");
-  Serial.print(unitize(x,mag));
-  Serial.print("  ");
-  Serial.print(y);
-  Serial.print(" , ");
-  Serial.print(unitize(x,mag));
-  Serial.print("  ");
-  Serial.print(pythagerian(x, y));
-  Serial.print(" dir: ");
-  Serial.print(process_direction(x, y, mag));
-  Serial.print("  ");
-  Serial.print(process_speed(mag, init_x, init_y));
-  Serial.print("\n");
-  #else
-  Serial.print("I M ");
-  Serial.print(process_direction(true, x, y, mag));
+  Serial.print(" M ");
+  Serial.print(process_direction(inverted, x, y, mag));
   Serial.print(" ");
-  Serial.print(process_speed(mag, init_x, init_y));
+  Serial.print(process_speed(mag, (init_x+ init_y)/2));
   Serial.print("\n");
-  #endif
-
 }
+
+void js_in_servo_to_serial(const char& dev, const int& axis, const int& read_pin, const int& init_axis, const bool& inverted, int& axis_degree)
+{
+//  this is the code for the servo 
+//what should happen is that the x and y should be checked if they have grown
+  float x = analogRead(read_pin) - init_axis;
+
+  int modifier = 0;
+  switch (process_speed(abs(x), init_axis))
+  {
+    case slow:
+      modifier = 1;
+      break;
+    case medium:
+      modifier = 2;
+    break;
+    case high:
+      modifier = 3;
+    break;
+    default:
+      modifier = 0;
+  }
+
+  if(inverted) x = -x;
+  
+  if(axis_degree < 180 && x > 0) 
+  {
+    axis_degree+= modifier;
+  }else
+  if(axis_degree > 0 && x < 0)
+  {
+    axis_degree-=modifier;
+  }
+  
+  Serial.print("S S ");
+  Serial.print(axis);
+  Serial.print(" ");
+  Serial.print(axis_degree);
+  Serial.print(" \n");
+}
+
+
+
+
+
+
+
+
+
+
 
 
 

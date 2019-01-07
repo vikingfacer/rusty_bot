@@ -56,7 +56,7 @@ fn main() {
     for line in reader.lines() {
         if line.is_ok() {
            // println!("{:?}", line.unwrap_or("this broke".to_string()));
-           let mut transmit_str : String = "I M ".to_owned() + &line.unwrap();
+           let mut transmit_str : String =  line.unwrap();
 
            stream.write(transmit_str.as_bytes());
            print = true;

@@ -109,7 +109,7 @@ fn push_to_thread(spi_p : &Producer<Vec<u8>>, i2c_p : &Producer<Vec<u8>>, msg : 
 				_ => println!("interface unspecified")
 			}
 		}
-		_ => println!("Error Not analog or lcd is not implemented {:?} {:?}", msg, line!())
+		_ => println!("Error Not analog or lcd is not implemented {:?} {:}", msg)
 		// all these prints will eventually be switched to error output
 	}
 }
