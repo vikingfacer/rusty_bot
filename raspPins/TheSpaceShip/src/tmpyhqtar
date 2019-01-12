@@ -160,10 +160,9 @@ fn main() {
 			match spi_buf {
     			Some(ref buf) =>{
 					let mut trans = SpidevTransfer::write( &buf[..]);
-					// println!("{:?}", spidev.transfer(&mut SpidevTransfer::write("d 24 w 1".as_bytes())));
-					println!("{:?}", spidev.transfer(&mut trans));
-					// println!("{:?}", spidev.transfer(&mut SpidevTransfer::write("d 24 w 1".as_bytes())));
+					println!("{:?}", spidev.transfer(&mut SpidevTransfer::write("d 24 w 1".to_b)));
 
+					println!("{:?}", spidev.transfer(&mut trans));
 				},
 				None => continue
 			}

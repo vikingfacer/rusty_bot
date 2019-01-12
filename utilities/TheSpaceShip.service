@@ -1,0 +1,16 @@
+[Unit]
+Description=Raspberry Pi to Arduino Communication system
+After=multi-user.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=pi
+WorkingDirectory=/usr/local/TheSpaceShip
+ExecStart=/usr/bin/TheSpaceShip/TheSpaceShip
+ExecStop=kill `cat /var/run/TheSpaceShip.pid`
+
+[Install]
+WantedBy=multi-user.target

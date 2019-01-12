@@ -90,7 +90,11 @@ fn push_to_thread(spi_p : &Producer<Vec<u8>>, i2c_p : &Producer<Vec<u8>>, msg : 
 	match msg {
 		Message::digital{ref interface, ref pin, ref mode, ref action} => {
 			match interface as &str{
-				"spi" => spi_p.push(msg.to_msg_vec()).unwrap(), // the unwrap should eventually be handled
+				"spi" => {
+							spi_p.push(d{})
+							spi_p.push(msg.to_msg_vec()).unwrap();
+
+							}, // the unwrap should eventually be handled
 				"i2c" => i2c_p.push(msg.to_msg_vec()).unwrap(),
 
 				_ => println!("interface unspecified")
@@ -160,10 +164,7 @@ fn main() {
 			match spi_buf {
     			Some(ref buf) =>{
 					let mut trans = SpidevTransfer::write( &buf[..]);
-					// println!("{:?}", spidev.transfer(&mut SpidevTransfer::write("d 24 w 1".as_bytes())));
 					println!("{:?}", spidev.transfer(&mut trans));
-					// println!("{:?}", spidev.transfer(&mut SpidevTransfer::write("d 24 w 1".as_bytes())));
-
 				},
 				None => continue
 			}
