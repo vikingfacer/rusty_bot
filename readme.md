@@ -4,25 +4,32 @@
 * I d 30 r
 
 # Messaging Commands #
-## Grammar ##
+## Command structure ##
 
-* Message      ::= { Interface + Devterm }
-* Interface    ::= { I | i | S | s }
-* Devterm	     ::= { DevPinAction | LCDAction }
+* Message      ::= { (Interface :  I | i | S | s ) + Command }
+* Interface    ::= { SPI or I2c} 
+* Command	   ::= { (Digital : D | d + Dcmd) | (Analog : A | a + Acmd) | (Servo : S | s + Scmd) }
 
-* DevPinAction ::= { DevPin +  PinAction | Degree }
-* DevPin       ::= { PinType + Pin }
+
+## Digtial Read Write ## 
+
+* Dcmd 		   ::= { Pin + ( Read | ( Write + Action) ) }
+* Pin          ::= { u8 }
+* Read         ::= { R | r}
+* Write        ::= { W | w}
+* Action   	   ::= { u8 }
+
+## Analog Read Write ##
+* Analog	   ::= { Pin + }
+
+
+## Servo Command Read Write ##
+* Degree       ::= { u8 }
 * PinType      ::= { D | d | A | a | S | s }
-* Pin          ::= { u8 int }
-* PinAction    ::= { Read | WriteTerm + u8 int}
-* Read         ::= {R | r}
-* WriteTerm    ::= {W | w + u8}
-* Degreee      ::= {u8 int }
 
-* LCDAction    ::= { LCD + LCDmsg }
-* LCD          ::= { L | l }
-* LCDmsg       ::= { char* }
 
+## DC Motors ##
+this is under construction 
 
 
 Controller pins:

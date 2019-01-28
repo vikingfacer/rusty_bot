@@ -1,0 +1,16 @@
+[Unit]
+Description=Raspberry Pi Controller of TheSpaceShip
+After=multi-user.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=pi
+WorkingDirectory=~
+ExecStart=~/runcontroller.sh
+ExecStop=kill `cat /var/run/runcontroller.pid`
+
+[Install]
+WantedBy=multi-user.target

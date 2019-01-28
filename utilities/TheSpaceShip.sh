@@ -26,7 +26,7 @@ restart)
     ;;
 status)
     if [ -e /var/run/TheSpaceShip.pid ]; then
-        echo sax-rest is running, pid=`cat /var/run/TheSpaceShip.pid`
+        echo TheSpaceShip is running, pid=`cat /var/run/TheSpaceShip.pid`
     else
         echo TheSpaceShip is not running
         exit 1
