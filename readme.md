@@ -3,7 +3,7 @@ This is a robot project that leverages a Raspberry Pi and Arduino. The Raspberry
 to a arduino the aim is to make the command structure very generatic so any arduino and Pi set up can be used, and to 
 make this project as plug and play as possible. 
 
-`Feel Free to look through the source code and critic everything. I appreciate the criticism, help and support
+`Feel Free to look through the source code and critic everything. I appreciate the help and support
 `
 # Commands # 
 These are the commands that are supported by the project. These commands are that control the arduino board.
